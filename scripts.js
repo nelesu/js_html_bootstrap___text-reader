@@ -2,63 +2,72 @@ const {
   speechSynthesis
 } = window;
 
-
-const voices = document.getElementById("voices");
+const voicesSelect = document.getElementById("voices");
 const rate = document.getElementById("rate");
 const pitch = document.getElementById("pitch");
 const text = document.getElementById("text");
+const LANG_RU = "ru-RU";
+const LANG_US = "en-US";
+const LANG_GB = "en-GB";
 
+let voices = [];
 
-let voices = speechSynthesis.getVoices();
-
-
-
-
-const voicesList = document.querySelector('#voices');
-
-function populateVoiceList() {
+const populateVoiceList = () => {
   voices = speechSynthesis.getVoices();
-  const selectedIndex =
-    voicesList.selectedIndex < 0 ? 0 : voicesList.selectedIndex;
-  voicesList.innerHTML = '';
 
-  for (i = 0; i < voices.length; i++) {
-    const option = document.createElement('option');
-    option.textContent = voices[i].name + ' (' + voices[i].lang + ')';
+  // const selectedIndex = voicesList.selectedIndex < 0 ? 0 : voicesList.selectedIndex;
+  voicesSelect.innerHTML = voices
+    .map((voice, index) => voice.lang === LANG_RU || voice.lang === LANG_US || voice.lang === LANG_GB ? `<option value=${index} data-lang="${voice.lang}" data-name="${voice.name}">${voice.name} (${voice.lang})</option>` : null)
+    .join("");
 
-    if (voices[i].default) {
-      option.textContent += ' -- DEFAULT';
-    }
 
-    option.setAttribute('data-lang', voices[i].lang);
-    option.setAttribute('data-name', voices[i].name);
-    voicesList.appendChild(option);
-  }
-  voicesList.selectedIndex = selectedIndex;
+
+  // if (voicesList[i].default) {
+  //   option.textContent += ' -- DEFAULT';
+  // }
+
+  // option.setAttribute('data-lang', voicesList[i].lang);
+  // option.setAttribute('data-name', voicesList[i].name);
+  // voicesList.appendChild(voicesList);
+
+  // voicesList.selectedIndex = selectedIndex;
 }
 
 
 populateVoiceList();
-if (speechSynthesis.onvoiceschanged !== undefined) {
-  speechSynthesis.onvoiceschanged = populateVoiceList;
-}
+// if (speechSynthesis.onvoiceschanged !== undefined) {
+//   speechSynthesis.onvoiceschanged = populateVoiceList;
+// }
 
 const say = () => {
-
-  let options = new SpeechSynthesisUtterance(document.querySelector("#text").value);
-  options.lang = "ru-Ru";
-  let selectedOption = voicesList.selectedOptions[0].getAttribute('data-name');
-  for (let index = 0; index < voices.length; index++) {
-    if (voices[index].name === selectedOption) {
-      options.voice = voices[index];
-    }
+  if (speechSynthesis.speaking) {
+    console.error(speechSynthesis.speaking)
+    return;
   }
 
 
+  if (text.value !== "") {
+    const ssUtterance = new SpeechSynthesisUtterance(text.value);
 
-  speechSynthesis.speak(options)
-}
+    ssUtterance.lang = LANG_RU;
+    ssUtterance.pitch = pitch.value;
+    ssUtterance.rate = rate.value;
+    ssUtterance.voice = voices[voicesSelect.value];
+    console.log(ssUtterance)
+    // let selectedOption = voicesSelect.selectedOptions[0].getAttribute("data-name");
+    // voices.forEach((voice) => {
+    //   if (voice.name === selectedOption) {
+
+    //   }
+    // })
+
+    speechSynthesis.speak(ssUtterance)
+  }
+
+};
 
 
 
 document.querySelector("#btn-start").addEventListener('click', say);
+document.querySelector("#btn-stop").addEventListener('click', speechSynthesis.cancel);
+speechSynthesis.addEventListener("voiceschanged", populateVoiceList)
